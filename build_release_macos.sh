@@ -21,7 +21,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-ADDON_VERSION="0.25.0"
+ADDON_VERSION="0.25.1"
 PYTHON_CMD="${PYTHON:-python3}"
 ZIP_NAME="sketchup_importer_${ADDON_VERSION}_macos.zip"
 

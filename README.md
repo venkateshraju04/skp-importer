@@ -38,6 +38,15 @@ The latest version of the importer is compatible with:
 
 For older versions of Blender, check the specific release notes on the [releases page](https://github.com/martijnberger/pyslapi/releases).
 
+## Version 0.25.1 Fixes
+
+This version fixes a critical import crash and includes build improvements:
+
+- **Fixed KeyError on nested/duplicate components**: Models with nested component definitions or auto-renamed duplicates (e.g. `ComponentName#1`) would crash with a `KeyError` during import. The importer now correctly resolves component definitions directly from instances instead of relying on the top-level definition list, which doesn't include all definitions.
+- **Fixed duplicate processing**: Removed an accidental duplicate call to `write_duplicateable_groups()` that caused components to be processed twice unnecessarily.
+- **macOS Apple Silicon support**: Updated build configuration with native `arm64` support and modernized from `distutils` to `setuptools`.
+- **Release build script**: Added `build_release_macos.sh` for one-command addon packaging on macOS.
+
 ## Version 0.25 Improvements
 
 This version incorporates significant improvements by [Peter Kirkham](https://pkirkham.github.io/blog/importing-from-sketchup-into-blender/) that address several critical issues with the SketchUp importer:
