@@ -5,11 +5,26 @@ __author__ = "Martijn Berger"
 
 import platform
 import struct
+import sys
 import sysconfig
 
 from setuptools import setup, Extension
 
 from Cython.Distutils import build_ext
+
+# ─── Safety: warn if building with the wrong Python ─────────────────────
+# Blender 5.x bundles Python 3.11. Building with any other version
+# produces a .so that will SIGSEGV on import due to ABI mismatch.
+if sys.version_info[:2] != (3, 11):
+    print(
+        f"\n"
+        f"  ⚠️  WARNING: Building with Python {sys.version_info.major}"
+        f".{sys.version_info.minor}, but Blender 5.x requires 3.11.\n"
+        f"  ⚠️  The resulting .so will crash Blender on import!\n"
+        f"  ⚠️  Use Blender's bundled Python instead:\n"
+        f"  ⚠️    /Applications/Blender.app/Contents/Resources/5.0"
+        f"/python/bin/python3.11 setup.py build_ext --inplace\n"
+    )
 
 # Detect Python ABI tag for naming the compiled extension
 _abi_tag = sysconfig.get_config_var("SOABI") or "cpython"
