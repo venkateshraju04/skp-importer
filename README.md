@@ -1,125 +1,77 @@
 # pyslapi
-Python bindings for the official Sketchup API and an importer for blender based on them
+Python bindings for the official SketchUp API and a SketchUp importer addon for Blender.
 
-> ⚠️ **Fair Warning:** Importing large or deeply nested SketchUp models may cause Blender to freeze, crash, or reconsider its purpose in life. If the app suddenly stops responding, don’t panic, it’s probably busy untangling 47,000 components named Group#1 while your CPU files for emotional compensation. Save your work before importing, keep autosave enabled, and maybe whisper a small prayer to the viewport gods. If Blender crashes... just know the addon tried its best in this cruel world. Proper fix coming soon 🙃. Until then we pray together.
-## Installing the Addon in Blender
+> ⚠️ **Warning:** Large or deeply nested SketchUp models may cause Blender to freeze or crash. Save your work and keep autosave enabled before importing.
 
-### Method 1: Direct Installation (Recommended)
-1) Download the latest release from [the releases page](https://github.com/martijnberger/pyslapi/releases)
-2) Start Blender
-3) From the top menu, choose: **Edit > Preferences...**
-4) Click on the **Add-ons** tab
-5) Click on the **Install...** button
-6) Browse to and select the downloaded zip file (e.g., `sketchup_importer_X.XX.zip`)
-7) Click **Install Add-on**
-8) In the add-ons list, search for "Sketchup"
-9) Enable the add-on by clicking the checkbox next to **Import-Export: Sketchup importer**
-10) Click **Save Preferences** to keep the add-on enabled for future Blender sessions
+## Installation
 
-### Method 2: Manual Installation
-1) Download the latest release zip file
-2) Unpack the zip file into Blender's addons folder:
-   - Windows: `%APPDATA%\Blender Foundation\Blender\[version]\scripts\addons`
-   - macOS: `~/Library/Application Support/Blender/[version]/scripts/addons`
-   - Linux: `~/.config/blender/[version]/scripts/addons`
-3) Restart Blender and enable the add-on as described in steps 3-10 above
+### Direct Install (Recommended)
+1. Download the latest release from [the releases page](https://github.com/martijnberger/pyslapi/releases)
+2. In Blender: **Edit > Preferences > Add-ons > Install…** → select the downloaded zip
+3. Search for "Sketchup", enable the checkbox, and save preferences
 
-## Using the Addon
-Once installed and enabled, you can import Sketchup files (.skp) by:
-1) From Blender's top menu, choose: **File > Import > Import Sketchup Scene (.skp)**
-2) Navigate to and select your .skp file
-3) Adjust import settings if needed and click **Import Sketchup Scene**
+### Manual Install
+Unpack the release zip into Blender's addons folder:
+- **Windows:** `%APPDATA%\Blender Foundation\Blender\[version]\scripts\addons`
+- **macOS:** `~/Library/Application Support/Blender/[version]/scripts/addons`
+- **Linux:** `~/.config/blender/[version]/scripts/addons`
 
+Then restart Blender and enable the addon as above.
+
+## Usage
+**File > Import > Import Sketchup Scene (.skp)** → select your `.skp` file → click **Import**.
 
 ## Compatibility
-The latest version of the importer is compatible with:
 - Blender 5.x (tested on 5.0.1)
-- Python 3.11
-- macOS Apple Silicon (arm64)
-- Various versions of SketchUp files up to and including version 2025.1
+- Python 3.11 · macOS Apple Silicon (arm64)
+- SketchUp files up to version 2025.1
 
-For older versions of Blender, check the specific release notes on the [releases page](https://github.com/martijnberger/pyslapi/releases).
+> **Linux** is not supported — the SketchUp SDK doesn't provide Linux libraries.
 
-## Version 0.25.2 Fixes
+## Changelog
 
-This version fixes a critical crash that prevented the addon from loading in Blender 5.x:
+### v0.25.2 — macOS Crash Fixes
+*macOS-specific errors fixed by [Venkatesh Raju](https://github.com/venkateshraju04)*
 
-- **Fixed Blender 5.x crash (SIGSEGV)**: The compiled native extension (`sketchup.so`) caused an instant `EXC_BAD_ACCESS` crash during startup due to a Python ABI mismatch. The extension was compiled against incompatible Python headers, causing CPython 3.11's redesigned code-object structs to be read with wrong offsets. Recompiled with matching Python 3.11 headers and Cython 3.x.
-- **Upgraded Cython to 3.x**: Old Cython (0.29.x) generated C code with known incompatibilities against CPython 3.11 internals. Now requires Cython >= 3.0.0.
-- **Improved build script**: `build_release_macos.sh` now auto-detects Blender's bundled Python version, verifies ABI compatibility, falls back to Homebrew `python@3.11` when Blender's Python lacks development headers, and runs post-build verification checks.
+- **Fixed Blender 5.x crash (SIGSEGV):** Recompiled the native extension against matching Python 3.11 headers + Cython 3.x to resolve ABI mismatch crashes.
+- **Upgraded Cython to 3.x** for CPython 3.11 compatibility.
+- **Improved build script:** `build_release_macos.sh` now auto-detects Blender's Python, verifies ABI, falls back to Homebrew `python@3.11`, and runs post-build checks.
 
-## Version 0.25.1 Fixes
+### v0.25.1
+*macOS-specific errors fixed by [Venkatesh Raju](https://github.com/venkateshraju04)*
 
-This version fixes a critical import crash and includes build improvements:
+- **Fixed KeyError on nested/duplicate components:** resolves definitions from instances instead of the top-level list.
+- **Fixed duplicate processing** of components.
+- **macOS Apple Silicon support** with native `arm64` builds and `setuptools`.
+- **Added `build_release_macos.sh`** for one-command addon packaging.
 
-- **Fixed KeyError on nested/duplicate components**: Models with nested component definitions or auto-renamed duplicates (e.g. `ComponentName#1`) would crash with a `KeyError` during import. The importer now correctly resolves component definitions directly from instances instead of relying on the top-level definition list, which doesn't include all definitions.
-- **Fixed duplicate processing**: Removed an accidental duplicate call to `write_duplicateable_groups()` that caused components to be processed twice unnecessarily.
-- **macOS Apple Silicon support**: Updated build configuration with native `arm64` support and modernized from `distutils` to `setuptools`.
-- **Release build script**: Added `build_release_macos.sh` for one-command addon packaging on macOS.
+### v0.25
+*Improvements by [Peter Kirkham](https://pkirkham.github.io/blog/importing-from-sketchup-into-blender/)*
 
-## Version 0.25 Improvements
+- Preserved SketchUp hierarchy in Blender's outliner
+- Fixed nested component/group issues and name collisions
+- Fixed transformation errors on mixed-content groups
 
-This version incorporates significant improvements by [Peter Kirkham](https://pkirkham.github.io/blog/importing-from-sketchup-into-blender/) that address several critical issues with the SketchUp importer:
+> **Note:** Some complex multi-transform groups may still import incorrectly. Explode and re-group the geometry in SketchUp before importing as a workaround.
 
-- **Preserved Hierarchy Structure**: Maintains the original SketchUp model hierarchy in Blender's outliner
-- **Improved Nested Components**: Fixed issues with nesting of groups and components
-- **Name Recognition Fix**: Solved problems with objects sharing the same name not being recognized as separate entities
-- **Transformation Corrections**: Fixed transformations not being correctly applied to groups containing both nested loose mesh data and groups
-
-As noted by Peter Kirkham in his August 2022 update:
-> "I've continued to work on the import script and have solved the issues with nesting of groups and components. The issue turned out to be related to a mix of objects with the same name not being recognised as separate entities, and with transformations not being correctly applied to groups containing both nested loose mesh data and groups. These problems have been fixed and the importer is now a lot more robust."
-
-**Note about complex transformations**: There may still be occasional import issues with groups that have multiple transformations applied. If you encounter problems, try exploding and re-grouping the geometry in SketchUp to reset the transformations before importing.
-
-## Features Not Yet Implemented
-
-### Platform Support
-- **Linux Support**: Not available due to limitations in the SketchUp SDK which doesn't provide Linux libraries.
-
-### Import Options
-- **Line-Only Import**: Future feature to import only line geometry without faces.
-
-
-
-## Build Info
+## Building from Source (macOS)
 
 ### Prerequisites
-- **macOS** with Xcode command-line tools (`xcode-select --install`)
-- **Blender 5.x** installed in `/Applications`
-- **Homebrew Python 3.11** (`brew install python@3.11`) — needed because Blender's Python lacks development headers
-- **SketchUp SDK** — download from https://extensions.sketchup.com/sketchup-sdk
+- Xcode CLI tools (`xcode-select --install`)
+- Blender 5.x in `/Applications`
+- Homebrew Python 3.11 (`brew install python@3.11`)
+- [SketchUp SDK](https://extensions.sketchup.com/sketchup-sdk) — copy `SketchUpAPI.framework` into the repo root
 
-### Quick Build (Recommended)
-
-1) Copy `SketchUpAPI.framework` (and optionally `LayOutAPI.framework`) from the SDK into the repo root
-
-2) Run the build script:
-   ```bash
-   ./build_release_macos.sh
-   ```
-
-   This automatically:
-   - Detects Blender's Python version and verifies ABI compatibility
-   - Falls back to Homebrew `python@3.11` if Blender's Python lacks headers
-   - Installs Cython 3.x if missing
-   - Cleans stale artifacts and builds from scratch
-   - Fixes framework load paths with `install_name_tool`
-   - Packages the addon as an installable zip
-
-3) Install the output zip in Blender: **Edit > Preferences > Add-ons > Install**
+### Quick Build
+```bash
+./build_release_macos.sh
+```
+Then install the output zip in Blender: **Edit > Preferences > Add-ons > Install**.
 
 ### Manual Build
-
-If you prefer to build manually:
-
 ```bash
-# Use Python 3.11 that matches Blender's version
 export PYTHON=$(brew --prefix python@3.11)/bin/python3.11
-
-# Install build dependencies
 $PYTHON -m pip install "Cython>=3.0.0" setuptools
-
-# Clean and build
 rm -rf build/ sketchup.cpp
 $PYTHON setup.py build_ext --inplace
 
@@ -129,11 +81,6 @@ install_name_tool -change \
   @rpath/SketchUpAPI.framework/Versions/A/SketchUpAPI \
   @loader_path/SketchUpAPI.framework/Versions/A/SketchUpAPI \
   "$SO_FILE"
-
-# Verify
-/Applications/Blender.app/Contents/MacOS/Blender --background \
-  --python-expr "import sketchup; print(sketchup.get_API_version())"
 ```
 
-> ⚠️ **Do NOT build with your system Python** if it's not 3.11. The resulting `.so` will crash Blender with a SIGSEGV due to ABI mismatch. `setup.py` will warn you if the version is wrong.
-
+> ⚠️ **Do NOT build with a non-3.11 Python.** The resulting `.so` will crash Blender with a SIGSEGV due to ABI mismatch.
