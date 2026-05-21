@@ -138,6 +138,27 @@ class SceneImporter:
         self.basepath, self.skp_filename = os.path.split(self.filepath)
         return self  # allow chaining
 
+    def _resolve_component(self, instance):
+        """Get component definition from an instance, registering it if previously unknown.
+
+        SUModelGetComponentDefinitions only returns top-level definitions.
+        Nested components and auto-renamed duplicates (e.g. 'Foo#1') may be
+        missing from self.skp_components.  This method uses the instance's own
+        definition reference (which is always valid) and lazily registers any
+        newly-discovered definition so that depth analysis and deduplication
+        continue to work.
+        """
+        defn = instance.definition
+        name = defn.name
+        if name not in self.skp_components:
+            self.skp_components[name] = defn
+            # Compute depth for the newly discovered component
+            D = SKP_util()
+            self.component_depth[name] = D.component_deps(defn.entities)
+            if not MIN_LOGS:
+                skp_log(f"Discovered nested component: {name}")
+        return defn
+
     def load(self, context, **options):
         """Load a SketchUp file"""
 
@@ -272,11 +293,6 @@ class SceneImporter:
         if options["dedub_only"]:
             return {"FINISHED"}
 
-        self.write_duplicateable_groups()
-
-        if options["dedub_only"]:
-            return {"FINISHED"}
-
         # self.component_stats = defaultdict(list)
 
         # Start stopwatch for mesh objects import
@@ -328,7 +344,7 @@ class SceneImporter:
             for k, v in component_stats.items():
                 name, mat = k
                 depth = self.component_depth[name]
-                comp_def = self.skp_components[name]
+                comp_def = self.skp_components.get(name)
                 if comp_def and depth == 1:
                     # self.component_skip[(name, mat)] = comp_def.entities
                     pass
@@ -379,7 +395,7 @@ class SceneImporter:
             if self.layers_skip and instance.layer in self.layers_skip:
                 continue
             mat = inherent_default_mat(instance.material, default_material)
-            cdef = self.skp_components[instance.definition.name]
+            cdef = self._resolve_component(instance)
             if (cdef.name, mat) in component_skip:
                 continue
             if DEBUG:
@@ -716,7 +732,7 @@ class SceneImporter:
             if self.layers_skip and instance.layer in self.layers_skip:
                 continue
             mat_name = inherent_default_mat(instance.material, default_material)
-            cdef = self.skp_components[instance.definition.name]
+            cdef = self._resolve_component(instance)
             if instance.name == "":
                 cname = "C-" + cdef.name
             else:
@@ -797,7 +813,7 @@ class SceneImporter:
         for instance in entities.instances:
             if self.layers_skip and instance.layer in self.layers_skip:
                 continue
-            cdef = self.skp_components[instance.definition.name]
+            cdef = self._resolve_component(instance)
             self.component_def_as_group(
                 cdef.entities,
                 cdef.name,

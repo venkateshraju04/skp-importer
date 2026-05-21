@@ -21,9 +21,8 @@ class proxy_dict(dict):
         if key.lower().endswith("_proxy"):
             try:
                 return dict.__getitem__(self, key[:-6])
-            except KeyError as _e:
-                return dict.__getitem__(self, key)
-
+            except KeyError:
+                pass  # fall through to try the full key
         return dict.__getitem__(self, key)
 
 
