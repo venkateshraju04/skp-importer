@@ -1,7 +1,7 @@
 # pyslapi
 Python bindings for the official Sketchup API and an importer for blender based on them
 
-
+> ⚠️ **Fair Warning:** Importing large or deeply nested SketchUp models may cause Blender to freeze, crash, or reconsider its purpose in life. If the app suddenly stops responding, don’t panic, it’s probably busy untangling 47,000 components named Group#1 while your CPU files for emotional compensation. Save your work before importing, keep autosave enabled, and maybe whisper a small prayer to the viewport gods. If Blender crashes... just know the addon tried its best in this cruel world. Proper fix coming soon 🙃. Until then we pray together.
 ## Installing the Addon in Blender
 
 ### Method 1: Direct Installation (Recommended)
@@ -29,6 +29,7 @@ Once installed and enabled, you can import Sketchup files (.skp) by:
 1) From Blender's top menu, choose: **File > Import > Import Sketchup Scene (.skp)**
 2) Navigate to and select your .skp file
 3) Adjust import settings if needed and click **Import Sketchup Scene**
+
 
 ## Compatibility
 The latest version of the importer is compatible with:
