@@ -22,7 +22,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-ADDON_VERSION="0.25.1"
+ADDON_VERSION="0.25.2"
 ZIP_NAME="sketchup_importer_${ADDON_VERSION}_macos_arm64.zip"
 
 # ─── Locate Blender's bundled Python ─────────────────────────────────────────

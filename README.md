@@ -33,11 +33,20 @@ Once installed and enabled, you can import Sketchup files (.skp) by:
 
 ## Compatibility
 The latest version of the importer is compatible with:
-- Blender 4.x
+- Blender 5.x (tested on 5.0.1)
 - Python 3.11
+- macOS Apple Silicon (arm64)
 - Various versions of SketchUp files up to and including version 2025.1
 
 For older versions of Blender, check the specific release notes on the [releases page](https://github.com/martijnberger/pyslapi/releases).
+
+## Version 0.25.2 Fixes
+
+This version fixes a critical crash that prevented the addon from loading in Blender 5.x:
+
+- **Fixed Blender 5.x crash (SIGSEGV)**: The compiled native extension (`sketchup.so`) caused an instant `EXC_BAD_ACCESS` crash during startup due to a Python ABI mismatch. The extension was compiled against incompatible Python headers, causing CPython 3.11's redesigned code-object structs to be read with wrong offsets. Recompiled with matching Python 3.11 headers and Cython 3.x.
+- **Upgraded Cython to 3.x**: Old Cython (0.29.x) generated C code with known incompatibilities against CPython 3.11 internals. Now requires Cython >= 3.0.0.
+- **Improved build script**: `build_release_macos.sh` now auto-detects Blender's bundled Python version, verifies ABI compatibility, falls back to Homebrew `python@3.11` when Blender's Python lacks development headers, and runs post-build verification checks.
 
 ## Version 0.25.1 Fixes
 
@@ -74,39 +83,57 @@ As noted by Peter Kirkham in his August 2022 update:
 
 ## Build Info
 
-### OSX Build
-1) Install Python3 from Python website (python.org)
-2) Install Cython from shell:
-   ```
-   pip3 install Cython --install-option="--no-cython-compile"
-   ```
-   (replace by pip if needed)
+### Prerequisites
+- **macOS** with Xcode command-line tools (`xcode-select --install`)
+- **Blender 5.x** installed in `/Applications`
+- **Homebrew Python 3.11** (`brew install python@3.11`) — needed because Blender's Python lacks development headers
+- **SketchUp SDK** — download from https://extensions.sketchup.com/sketchup-sdk
 
-3) Download Sketchup SDK https://extensions.sketchup.com/sketchup-sdk
+### Quick Build (Recommended)
 
-#### BUILD
-1) Copy LayOutAPI.framework and SketchUpAPI.framework from SDK directory to pyslapi
+1) Copy `SketchUpAPI.framework` (and optionally `LayOutAPI.framework`) from the SDK into the repo root
 
-2) Build OSX version
-   ```
-   uv venv 
-   python3 setup.py build_ext --inplace
+2) Run the build script:
+   ```bash
+   ./build_release_macos.sh
    ```
 
-3) Run the two last lines of setup script manually:
-   ```
-   install_name_tool -change @rpath/SketchUpAPI.framework/Versions/Current/SketchUpAPI @loader_path/SketchUpAPI.framework/Versions/Current/SketchUpAPI sketchup.cpython-311-darwin.so
-   install_name_tool -change @rpath/SketchUpAPI.framework/Versions/A/SketchUpAPI @loader_path/SketchUpAPI.framework/Versions/A/SketchUpAPI sketchup.cpython-311-darwin.so
-   sudo xattr -r -d com.apple.quarantine SketchUpAPI.framework
-   ```
+   This automatically:
+   - Detects Blender's Python version and verifies ABI compatibility
+   - Falls back to Homebrew `python@3.11` if Blender's Python lacks headers
+   - Installs Cython 3.x if missing
+   - Cleans stale artifacts and builds from scratch
+   - Fixes framework load paths with `install_name_tool`
+   - Packages the addon as an installable zip
 
-#### INSTALL
-1) Copy the following files from pyslapi to SketchUp_Importer
-  - LayOutAPI.framework
-  - SketchUpAPI.framework
-  - sketchup.cpython-311-darwin
+3) Install the output zip in Blender: **Edit > Preferences > Add-ons > Install**
 
-2) Rename sketchup.cpython-311-darwin.so to sketchup.so
+### Manual Build
 
-3) Look the addon in Blender and enable it
+If you prefer to build manually:
+
+```bash
+# Use Python 3.11 that matches Blender's version
+export PYTHON=$(brew --prefix python@3.11)/bin/python3.11
+
+# Install build dependencies
+$PYTHON -m pip install "Cython>=3.0.0" setuptools
+
+# Clean and build
+rm -rf build/ sketchup.cpp
+$PYTHON setup.py build_ext --inplace
+
+# Fix framework paths
+SO_FILE=$(ls sketchup.cpython-311-darwin.so)
+install_name_tool -change \
+  @rpath/SketchUpAPI.framework/Versions/A/SketchUpAPI \
+  @loader_path/SketchUpAPI.framework/Versions/A/SketchUpAPI \
+  "$SO_FILE"
+
+# Verify
+/Applications/Blender.app/Contents/MacOS/Blender --background \
+  --python-expr "import sketchup; print(sketchup.get_API_version())"
+```
+
+> ⚠️ **Do NOT build with your system Python** if it's not 3.11. The resulting `.so` will crash Blender with a SIGSEGV due to ABI mismatch. `setup.py` will warn you if the version is wrong.
 
