@@ -6,7 +6,7 @@ Python bindings for the official SketchUp API and a SketchUp importer addon for 
 ## Installation
 
 ### Direct Install (Recommended)
-1. Download the latest release from [the releases page](https://github.com/martijnberger/pyslapi/releases)
+1. Download the latest release from [the releases page](https://github.com/venkateshraju04/skp-importer/releases)
 2. In Blender: **Edit > Preferences > Add-ons > Install…** → select the downloaded zip
 3. Search for "Sketchup", enable the checkbox, and save preferences
 
